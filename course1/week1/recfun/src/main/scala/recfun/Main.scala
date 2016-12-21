@@ -24,7 +24,19 @@ object Main {
   /**
     * Exercise 2
     */
-  def balance(chars: List[Char]): Boolean = ???
+  def balance(chars: List[Char]): Boolean = {
+    if (chars.isEmpty) true
+    else {
+      def check(chars: List[Char], level: Int): Int = {
+        if (chars.isEmpty || level < 0) level // abort recursion if level is negative
+        else if (chars.head == '(') check(chars.tail, level + 1)
+        else if (chars.head == ')') check(chars.tail, level - 1)
+        else check(chars.tail, level)
+      }
+      val levelReached = check(chars, 0)
+      levelReached == 0
+    }
+  }
 
   /**
     * Exercise 3
