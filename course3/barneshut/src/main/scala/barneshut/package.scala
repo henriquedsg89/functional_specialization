@@ -58,8 +58,8 @@ package object barneshut {
     val centerY: Float = nw.centerY + nw.size / 2f
     val size: Float = nw.size
     val mass: Float = nw.mass + ne.mass + sw.mass + se.mass
-    val massX: Float = (nw.massX * nw.mass + ne.massX * ne.mass + sw.massX * sw.mass + se.massX * se.mass) / mass
-    val massY: Float = (nw.massY * nw.mass + ne.massY * ne.mass + sw.massY * sw.mass + se.massY * se.mass) / mass
+    val massX: Float = if (mass == 0) 0 else (nw.massX * nw.mass + ne.massX * ne.mass + sw.massX * sw.mass + se.massX * se.mass) / mass
+    val massY: Float = if (mass == 0) 0 else (nw.massY * nw.mass + ne.massY * ne.mass + sw.massY * sw.mass + se.massY * se.mass) / mass
     val total: Int = nw.total + ne.total + sw.total + se.total
 
     def insert(b: Body): Fork = {
@@ -168,15 +168,22 @@ package object barneshut {
     for (i <- 0 until matrix.length) matrix(i) = new ConcBuffer
 
     def +=(b: Body): SectorMatrix = {
-      val index = Math.round(b.y % sectorSize)
-      matrix(index) += b//FIXME: I stop here
+      val sectorSize: Double = boundaries.size / sectorPrecision.toDouble
+      val indexX: Int = math.min(sectorPrecision - 1, ((b.x - boundaries.minX) / sectorSize).toInt)
+      val indexY: Int = math.min(sectorPrecision - 1, ((b.y - boundaries.minY) / sectorSize).toInt)
+      matrix(indexY * sectorPrecision + indexX) += b
       this
     }
 
     def apply(x: Int, y: Int) = matrix(y * sectorPrecision + x)
 
     def combine(that: SectorMatrix): SectorMatrix = {
-      ???
+      val newMatrix = new SectorMatrix(boundaries, sectorPrecision)
+      for (indexX <- 0 until sectorPrecision; indexY <- 0 until sectorPrecision) {
+        val index = indexY * sectorPrecision + indexX
+        newMatrix.matrix(index) = this.matrix(index).combine(that.matrix(index))
+      }
+      newMatrix
     }
 
     def toQuad(parallelism: Int): Quad = {
